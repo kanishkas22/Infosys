@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamGuard - Auto Selfie Verification</title>
+    
+    <!-- Load MediaPipe Face Detection dependencies via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 800px;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .camera-wrapper {
+            position: relative;
+            width: 640px;
+            height: 480px;
+            margin: 20px auto;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 3px solid #334155;
+            background: #000;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror view for natural interaction */
+        }
+
+        canvas {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        button {
+            padding: 12px 24px;
+            margin: 8px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: opacity 0.2s;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #allowBtn { background: #3b82f6; color: #fff; }
+        #retakeBtn { background: #e11d48; color: #fff; }
+        #submitBtn { background: #10b981; color: #fff; }
+
+        #preview {
+            display: none;
+            width: 320px;
+            border: 3px solid #10b981;
+            border-radius: 8px;
+            margin: 20px auto;
+        }
+
+        #status {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 15px;
+            color: #f1f5f9;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Selfie Verification</h2>
+        <p>Click "Allow Camera" and align your face inside the target oval.</p>
+        
+        <div class="camera-wrapper">
+            <video id="video" autoplay playsinline muted></video>
+            <canvas id="overlay"></canvas>
+        </div>
+
+        <img id="preview" alt="Selfie Preview">
+
+        <div>
+            <button id="allowBtn">Allow Camera</button>
+            <button id="retakeBtn" style="display:none;">Retake</button>
+            <button id="submitBtn" style="display:none;">Submit</button>
+        </div>
+
+        <p id="status">Waiting for camera access...</p>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const overlay = document.getElementById('overlay');
+        const ctx = overlay.getContext('2d');
+        const preview = document.getElementById('preview');
+        const statusText = document.getElementById('status');
+        
+        const allowBtn = document.getElementById('allowBtn');
+        const retakeBtn = document.getElementById('retakeBtn');
+        const submitBtn = document.getElementById('submitBtn');
+
+        let camera = null;
+        let isCaptured = false;
+        let alignmentTimer = null;
+        let holdCount = 0;
+
+        // Target bounding dimensions (Center Oval)
+        const TARGET = {
+            centerX: 320,
+            centerY: 220,
+            radiusX: 110,
+            radiusY: 140
+        };
+
+        // Draw guide overlay on top of video feed
+        function drawGuide(isAligned = false) {
+            overlay.width = 640;
+            overlay.height = 480;
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+            // Darken outside area to focus on the center circle
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.5)';
+            ctx.fillRect(0, 0, overlay.width, overlay.height);
+
+            // Clear out the oval cutout
+            ctx.save();
+            ctx.beginPath();
+            ctx.ellipse(TARGET.centerX, TARGET.centerY, TARGET.radiusX, TARGET.radiusY, 0, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+            ctx.restore();
+
+            // Draw Oval Border
+            ctx.beginPath();
+            ctx.ellipse(TARGET.centerX, TARGET.centerY, TARGET.radiusX, TARGET.radiusY, 0, 0, Math.PI * 2);
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = isAligned ? '#10b981' : '#f59e0b'; // Green if aligned, Amber if not
+            ctx.stroke();
+        }
+
+        // Initialize Face Detection model
+        const faceDetection = new FaceDetection({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
+        });
+
+        faceDetection.setOptions({
+            model: 'short',
+            minDetectionConfidence: 0.65
+        });
+
+        faceDetection.onResults(onResults);
+
+        function onResults(results) {
+            if (isCaptured) return;
+
+            if (results.detections.length === 0) {
+                drawGuide(false);
+                statusText.innerText = 'Looking for face...';
+                resetAutoCapture();
+                return;
+            }
+
+            // Get detected face bounds
+            const detection = results.detections[0].boundingBox;
+            
+            // Mirror conversion adjustment because video display is mirrored
+            const faceWidth = detection.width * overlay.width;
+            const faceHeight = detection.height * overlay.height;
+            const faceX = (1 - detection.xCenter) * overlay.width; 
+            const faceY = detection.yCenter * overlay.height;
+
+            // Check if detected face center aligns with target oval center
+            const dx = Math.abs(faceX - TARGET.centerX);
+            const dy = Math.abs(faceY - TARGET.centerY);
+
+            const isAligned = dx < 50 && dy < 50 && faceWidth > 150 && faceWidth < 300;
+
+            drawGuide(isAligned);
+
+            if (isAligned) {
+                if (!alignmentTimer) {
+                    holdCount = 2; // Countdown timer (seconds)
+                    statusText.innerText = `Hold still! Capturing in ${holdCount}...`;
+                    alignmentTimer = setInterval(() => {
+                        holdCount--;
+                        if (holdCount > 0) {
+                            statusText.innerText = `Hold still! Capturing in ${holdCount}...`;
+                        } else {
+                            capturePhoto();
+                        }
+                    }, 1000);
+                }
+            } else {
+                statusText.innerText = 'Position your face inside the circle';
+                resetAutoCapture();
+            }
+        }
+
+        function resetAutoCapture() {
+            if (alignmentTimer) {
+                clearInterval(alignmentTimer);
+                alignmentTimer = null;
+            }
+        }
+
+        function capturePhoto() {
+            resetAutoCapture();
+            isCaptured = true;
+
+            // Capture raw frame onto a hidden canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            
+            // Apply horizontal flip to match mirrored preview
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Display result
+            preview.src = canvas.toDataURL('image/png');
+            preview.style.display = 'block';
+            
+            // Toggle controls
+            statusText.innerText = 'Selfie Captured Successfully!';
+            retakeBtn.style.display = 'inline-block';
+            submitBtn.style.display = 'inline-block';
+            
+            if (camera) camera.stop();
+        }
+
+        // Camera Initialization
+        allowBtn.onclick = async () => {
+            allowBtn.style.display = 'none';
+            statusText.innerText = 'Connecting camera...';
+
+            camera = new Camera(video, {
+                onFrame: async () => {
+                    await faceDetection.send({ image: video });
+                },
+                width: 640,
+                height: 480
+            });
+
+            camera.start();
+        };
+
+        // Retake process
+        retakeBtn.onclick = () => {
+            isCaptured = false;
+            preview.style.display = 'none';
+            retakeBtn.style.display = 'none';
+            submitBtn.style.display = 'none';
+            
+            statusText.innerText = 'Restarting camera...';
+            if (camera) camera.start();
+        };
+
+        // Form Submit trigger
+        submitBtn.onclick = () => {
+    window.location.href = '/dashboard'; // ✅ Points to your Flask @app.route("/dashboard")
+};
+    </script>
+</body>
+</html>

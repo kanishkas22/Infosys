@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Microphone Check</title>
+
+<style>
+
+body{
+
+font-family:Arial;
+text-align:center;
+background:#f5f5f5;
+
+}
+
+button{
+
+padding:12px 20px;
+font-size:18px;
+
+}
+
+#status{
+
+margin-top:20px;
+font-size:20px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>Microphone Check</h2>
+
+<p>Please allow microphone access.</p>
+
+<button onclick="checkMic()">
+
+Allow Microphone
+
+</button>
+
+<p id="status"></p>
+
+<script>
+
+function checkMic(){
+
+navigator.mediaDevices.getUserMedia({
+
+audio:true
+
+})
+
+.then(function(stream){
+
+document.getElementById("status").innerHTML="✔ Microphone Connected";
+
+setTimeout(function(){
+
+window.location.href="/selfie-check";
+
+},2000);
+
+})
+
+.catch(function(){
+
+alert("Microphone permission denied");
+
+});
+
+}
+
+</script>
+
+</body>
+
+</html>

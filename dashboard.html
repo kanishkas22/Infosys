@@ -1,0 +1,1938 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ExamGuard - Online Examination</title>
+
+    <!-- MediaPipe Face Detection -->
+    <script
+        src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js"
+        crossorigin="anonymous">
+    </script>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        /* ================= HEADER ================= */
+
+        header {
+            background-color: #1e293b;
+            padding: 18px 35px;
+            border-bottom: 2px solid #334155;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: #38bdf8;
+        }
+
+        .user-status {
+            color: #10b981;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        /* ================= MAIN ================= */
+
+        .main-container {
+
+            display: flex;
+
+            padding: 25px;
+
+            gap: 25px;
+
+            min-height: calc(100vh - 75px);
+
+        }
+
+        /* ================= LEFT EXAM AREA ================= */
+
+        .exam-area {
+
+            flex: 2;
+
+            background-color: #1e293b;
+
+            border-radius: 12px;
+
+            padding: 25px;
+
+            border: 1px solid #334155;
+
+            overflow-y: auto;
+
+            max-height: calc(100vh - 125px);
+
+        }
+
+        .exam-title {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            margin-bottom: 20px;
+
+            padding-bottom: 15px;
+
+            border-bottom: 1px solid #334155;
+
+        }
+
+        .exam-title h2 {
+
+            color: #f1f5f9;
+
+        }
+
+        #examTimer {
+
+            background: #0f172a;
+
+            border: 1px solid #334155;
+
+            padding: 8px 15px;
+
+            border-radius: 7px;
+
+            color: #38bdf8;
+
+            font-weight: bold;
+
+        }
+
+        /* ================= INSTRUCTIONS ================= */
+
+        #instructionsSection {
+
+            display: block;
+
+        }
+
+        #instructionsSection h3 {
+
+            margin-bottom: 15px;
+
+            color: #38bdf8;
+
+        }
+
+        #instructionsSection ul {
+
+            padding-left: 25px;
+
+            line-height: 1.8;
+
+            color: #cbd5e1;
+
+        }
+
+        #instructionsSection li {
+
+            margin-bottom: 10px;
+
+        }
+
+        /* ================= QUESTIONS ================= */
+
+        #questionSection {
+
+            display: none;
+
+        }
+
+        .question-card {
+
+            background: #0f172a;
+
+            border: 1px solid #334155;
+
+            border-radius: 10px;
+
+            padding: 20px;
+
+            margin-bottom: 18px;
+
+        }
+
+        .question-number {
+
+            color: #38bdf8;
+
+            font-weight: bold;
+
+            margin-bottom: 10px;
+
+        }
+
+        .question-text {
+
+            font-size: 1rem;
+
+            font-weight: bold;
+
+            color: #f8fafc;
+
+            margin-bottom: 15px;
+
+            line-height: 1.5;
+
+        }
+
+        .option {
+
+            display: block;
+
+            background: #1e293b;
+
+            border: 1px solid #334155;
+
+            border-radius: 7px;
+
+            padding: 11px;
+
+            margin-bottom: 8px;
+
+            cursor: pointer;
+
+            color: #cbd5e1;
+
+            transition: 0.2s;
+
+        }
+
+        .option:hover {
+
+            border-color: #38bdf8;
+
+            background: #26364b;
+
+        }
+
+        .option input {
+
+            margin-right: 10px;
+
+            cursor: pointer;
+
+        }
+
+        /* ================= SUBMIT ================= */
+
+        #submitExamBtn {
+
+            display: none;
+
+            width: 100%;
+
+            padding: 14px;
+
+            margin-top: 10px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #10b981;
+
+            color: white;
+
+            font-size: 1rem;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+        }
+
+        #submitExamBtn:hover {
+
+            background: #059669;
+
+        }
+
+        /* ================= RIGHT PANEL ================= */
+
+        .right-panel {
+
+            flex: 1;
+
+            min-width: 350px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 18px;
+
+        }
+
+        /* ================= MONITOR ================= */
+
+        .monitor-card {
+
+            background: #1e293b;
+
+            border-radius: 12px;
+
+            padding: 15px;
+
+            border: 1px solid #334155;
+
+        }
+
+        .monitor-header {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            margin-bottom: 10px;
+
+        }
+
+        .monitor-header h3 {
+
+            font-size: 1rem;
+
+        }
+
+        .live-indicator {
+
+            color: #ef4444;
+
+            font-size: 0.8rem;
+
+            font-weight: bold;
+
+        }
+
+        .monitor-camera {
+
+            position: relative;
+
+            width: 100%;
+
+            height: 210px;
+
+            background: black;
+
+            border-radius: 8px;
+
+            overflow: hidden;
+
+            border: 2px solid #475569;
+
+        }
+
+        #monitorVideo {
+
+            width: 100%;
+
+            height: 100%;
+
+            object-fit: cover;
+
+            transform: scaleX(-1);
+
+        }
+
+        #monitorCanvas {
+
+            position: absolute;
+
+            top: 0;
+
+            left: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            pointer-events: none;
+
+        }
+
+        .camera-status {
+
+            margin-top: 8px;
+
+            font-size: 0.8rem;
+
+            color: #10b981;
+
+        }
+
+        /* ================= STATS ================= */
+
+        .stats-grid {
+
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 8px;
+
+            margin-top: 12px;
+
+        }
+
+        .stat-box {
+
+            background: #0f172a;
+
+            border: 1px solid #334155;
+
+            border-radius: 7px;
+
+            padding: 10px;
+
+            text-align: center;
+
+        }
+
+        .stat-label {
+
+            display: block;
+
+            font-size: 0.7rem;
+
+            color: #94a3b8;
+
+        }
+
+        .stat-value {
+
+            display: block;
+
+            margin-top: 5px;
+
+            font-size: 1.3rem;
+
+            font-weight: bold;
+
+            color: #38bdf8;
+
+        }
+
+        #faceCount {
+
+            color: #10b981;
+
+        }
+
+        #faceAlerts {
+
+            color: #facc15;
+
+        }
+
+        #tabSwitches {
+
+            color: #f97316;
+
+        }
+
+        /* ================= WARNING ================= */
+
+        #warningBox {
+
+            display: none;
+
+            margin-top: 10px;
+
+            padding: 10px;
+
+            background: #450a0a;
+
+            border: 1px solid #ef4444;
+
+            border-radius: 7px;
+
+            color: #fca5a5;
+
+            font-size: 0.8rem;
+
+            font-weight: bold;
+
+        }
+
+        /* ================= START EXAM ================= */
+
+        #startExamBtn {
+
+            width: 100%;
+
+            padding: 14px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #10b981;
+
+            color: white;
+
+            font-size: 1rem;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+        }
+
+        #startExamBtn:hover {
+
+            background: #059669;
+
+        }
+
+        /* ================= RESPONSIVE ================= */
+
+        @media(max-width:900px) {
+
+            .main-container {
+
+                flex-direction: column;
+
+            }
+
+            .right-panel {
+
+                min-width: auto;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     HEADER
+========================================================= -->
+
+<header>
+
+    <h1>ExamGuard Portal</h1>
+
+    <span class="user-status">
+
+        ● Selfie Verified
+
+    </span>
+
+</header>
+
+
+
+<!-- =========================================================
+     MAIN
+========================================================= -->
+
+<div class="main-container">
+
+
+    <!-- =====================================================
+         LEFT SIDE
+    ====================================================== -->
+
+    <div class="exam-area">
+
+
+        <div class="exam-title">
+
+            <h2 id="pageTitle">
+
+                Exam Instructions
+
+            </h2>
+
+            <span id="examTimer">
+
+                90:00
+
+            </span>
+
+        </div>
+
+
+        <!-- =================================================
+             INSTRUCTIONS
+        ================================================== -->
+
+        <div id="instructionsSection">
+
+            <h3>General Instructions</h3>
+
+            <ul>
+
+                <li>
+                    Total duration of the examination is
+                    <strong>90 minutes</strong>.
+                </li>
+
+                <li>
+                    Maintain a stable internet connection
+                    throughout the examination.
+                </li>
+
+                <li>
+                    Webcam monitoring will remain active
+                    throughout the examination.
+                </li>
+
+                <li>
+                    Only one person is allowed in the
+                    camera view.
+                </li>
+
+                <li>
+                    Tab switching is monitored and recorded.
+                </li>
+
+                <li>
+                    Read every question carefully before
+                    selecting your answer.
+                </li>
+
+                <li>
+                    Click <strong>Start Exam</strong> to
+                    begin the examination.
+                </li>
+
+            </ul>
+
+        </div>
+
+
+
+        <!-- =================================================
+             QUESTION SECTION
+        ================================================== -->
+
+        <div id="questionSection">
+
+
+            <!-- QUESTION 1 -->
+
+            <div class="question-card">
+
+                <div class="question-number">
+
+                    Question 1
+
+                </div>
+
+                <div class="question-text">
+
+                    Which of the following is commonly used
+                    for data manipulation and analysis in
+                    Data Science?
+
+                </div>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q1"
+                        value="Python">
+
+                    Python / Pandas
+
+                </label>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q1"
+                        value="HTML">
+
+                    HTML
+
+                </label>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q1"
+                        value="CSS">
+
+                    CSS
+
+                </label>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q1"
+                        value="Bootstrap">
+
+                    Bootstrap
+
+                </label>
+
+            </div>
+
+
+
+            <!-- QUESTION 2 -->
+
+            <div class="question-card">
+
+                <div class="question-number">
+
+                    Question 2
+
+                </div>
+
+                <div class="question-text">
+
+                    Which OpenCV function is commonly used
+                    to read an image from a file?
+
+                </div>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q2"
+                        value="imread">
+
+                    cv2.imread()
+
+                </label>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q2"
+                        value="imshow">
+
+                    cv2.imshow()
+
+                </label>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q2"
+                        value="read">
+
+                    cv2.read()
+
+                </label>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q2"
+                        value="load">
+
+                    cv2.load()
+
+                </label>
+
+            </div>
+
+
+
+            <!-- QUESTION 3 -->
+
+            <div class="question-card">
+
+                <div class="question-number">
+
+                    Question 3
+
+                </div>
+
+                <div class="question-text">
+
+                    What is the main objective of K-Means
+                    clustering?
+
+                </div>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q3"
+                        value="classification">
+
+                    To classify images using labels
+
+                </label>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q3"
+                        value="clusters">
+
+                    To divide data into K clusters
+
+                </label>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q3"
+                        value="database">
+
+                    To create a database
+
+                </label>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q3"
+                        value="regression">
+
+                    To perform regression only
+
+                </label>
+
+            </div>
+
+
+
+            <!-- QUESTION 4 -->
+
+            <div class="question-card">
+
+                <div class="question-number">
+
+                    Question 4
+
+                </div>
+
+                <div class="question-text">
+
+                    In K-Means clustering, what does the
+                    value K represent?
+
+                </div>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q4"
+                        value="features">
+
+                    Number of features
+
+                </label>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q4"
+                        value="iterations">
+
+                    Number of iterations
+
+                </label>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q4"
+                        value="clusters">
+
+                    Number of clusters
+
+                </label>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q4"
+                        value="rows">
+
+                    Number of rows
+
+                </label>
+
+            </div>
+
+
+
+            <!-- QUESTION 5 -->
+
+            <div class="question-card">
+
+                <div class="question-number">
+
+                    Question 5
+
+                </div>
+
+                <div class="question-text">
+
+                    Which OpenCV technique can be used to
+                    detect faces using a pre-trained
+                    classifier?
+
+                </div>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q5"
+                        value="haar">
+
+                    Haar Cascade
+
+                </label>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q5"
+                        value="sql">
+
+                    SQL Query
+
+                </label>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q5"
+                        value="pandas">
+
+                    Pandas
+
+                </label>
+
+
+                <label class="option">
+
+                    <input
+                        type="radio"
+                        name="q5"
+                        value="html">
+
+                    HTML Parser
+
+                </label>
+
+            </div>
+
+
+
+            <!-- SUBMIT -->
+
+            <button
+                id="submitExamBtn">
+
+                Submit Exam
+
+            </button>
+
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         RIGHT PANEL
+    ====================================================== -->
+
+    <div class="right-panel">
+
+
+        <!-- =================================================
+             LIVE PROCTORING
+        ================================================== -->
+
+        <div class="monitor-card">
+
+
+            <div class="monitor-header">
+
+                <h3>
+
+                    📹 Live Proctoring
+
+                </h3>
+
+
+                <span class="live-indicator">
+
+                    ● LIVE
+
+                </span>
+
+            </div>
+
+
+            <div class="monitor-camera">
+
+                <video
+                    id="monitorVideo"
+                    autoplay
+                    playsinline
+                    muted>
+                </video>
+
+
+                <canvas
+                    id="monitorCanvas">
+                </canvas>
+
+            </div>
+
+
+            <div
+                id="cameraStatus"
+                class="camera-status">
+
+                ● Camera initializing...
+
+            </div>
+
+
+            <div class="stats-grid">
+
+
+                <div class="stat-box">
+
+                    <span class="stat-label">
+
+                        Current Faces
+
+                    </span>
+
+                    <span
+                        id="faceCount"
+                        class="stat-value">
+
+                        0
+
+                    </span>
+
+                </div>
+
+
+                <div class="stat-box">
+
+                    <span class="stat-label">
+
+                        Face Alerts
+
+                    </span>
+
+                    <span
+                        id="faceAlerts"
+                        class="stat-value">
+
+                        0
+
+                    </span>
+
+                </div>
+
+
+                <div class="stat-box">
+
+                    <span class="stat-label">
+
+                        Tab Switches
+
+                    </span>
+
+                    <span
+                        id="tabSwitches"
+                        class="stat-value">
+
+                        0
+
+                    </span>
+
+                </div>
+
+
+                <div class="stat-box">
+
+                    <span class="stat-label">
+
+                        Camera
+
+                    </span>
+
+                    <span
+                        id="cameraState"
+                        class="stat-value"
+                        style="font-size:1rem;">
+
+                        Checking
+
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div id="warningBox">
+
+                ⚠️ Multiple persons detected.
+                Only one person is allowed in the
+                camera view.
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             START EXAM
+        ================================================== -->
+
+        <button
+            id="startExamBtn">
+
+            Start Exam
+
+        </button>
+
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+/* ============================================================
+   ELEMENTS
+============================================================ */
+
+const monitorVideo =
+    document.getElementById(
+        "monitorVideo"
+    );
+
+const monitorCanvas =
+    document.getElementById(
+        "monitorCanvas"
+    );
+
+const monitorCtx =
+    monitorCanvas.getContext("2d");
+
+
+const faceCountElement =
+    document.getElementById(
+        "faceCount"
+    );
+
+const faceAlertsElement =
+    document.getElementById(
+        "faceAlerts"
+    );
+
+const tabSwitchElement =
+    document.getElementById(
+        "tabSwitches"
+    );
+
+const cameraStatus =
+    document.getElementById(
+        "cameraStatus"
+    );
+
+const cameraState =
+    document.getElementById(
+        "cameraState"
+    );
+
+const warningBox =
+    document.getElementById(
+        "warningBox"
+    );
+
+const startExamBtn =
+    document.getElementById(
+        "startExamBtn"
+    );
+
+const instructionsSection =
+    document.getElementById(
+        "instructionsSection"
+    );
+
+const questionSection =
+    document.getElementById(
+        "questionSection"
+    );
+
+const pageTitle =
+    document.getElementById(
+        "pageTitle"
+    );
+
+const submitExamBtn =
+    document.getElementById(
+        "submitExamBtn"
+    );
+
+
+/* ============================================================
+   VARIABLES
+============================================================ */
+
+let monitorStream = null;
+
+let faceDetector = null;
+
+let faceAlerts = 0;
+
+let tabSwitches = 0;
+
+let previousFaceCount = 0;
+
+let examStarted = false;
+
+
+/* ============================================================
+   START CAMERA
+============================================================ */
+
+async function startMonitoringCamera() {
+
+    try {
+
+        cameraStatus.innerText =
+            "● Requesting camera...";
+
+        cameraStatus.style.color =
+            "#facc15";
+
+
+        monitorStream =
+            await navigator
+                .mediaDevices
+                .getUserMedia({
+
+                    video: {
+                        width: 640,
+                        height: 480,
+                        facingMode: "user"
+                    },
+
+                    audio: false
+
+                });
+
+
+        monitorVideo.srcObject =
+            monitorStream;
+
+
+        await monitorVideo.play();
+
+
+        cameraStatus.innerText =
+            "● Camera Active";
+
+        cameraStatus.style.color =
+            "#10b981";
+
+
+        cameraState.innerText =
+            "ACTIVE";
+
+        cameraState.style.color =
+            "#10b981";
+
+
+        initializeFaceDetector();
+
+    }
+
+    catch(error) {
+
+        console.error(error);
+
+
+        cameraStatus.innerText =
+            "● Camera unavailable";
+
+        cameraStatus.style.color =
+            "#ef4444";
+
+
+        cameraState.innerText =
+            "BLOCKED";
+
+        cameraState.style.color =
+            "#ef4444";
+
+    }
+
+}
+
+
+/* ============================================================
+   MEDIAPIPE
+============================================================ */
+
+function initializeFaceDetector() {
+
+
+    faceDetector =
+        new FaceDetection({
+
+            locateFile: function(file) {
+
+                return (
+                    "https://cdn.jsdelivr.net/npm/" +
+                    "@mediapipe/face_detection/" +
+                    file
+                );
+
+            }
+
+        });
+
+
+    faceDetector.setOptions({
+
+        model: "short",
+
+        minDetectionConfidence: 0.6
+
+    });
+
+
+    faceDetector.onResults(
+        handleFaceResults
+    );
+
+
+    startFaceDetection();
+
+}
+
+
+/* ============================================================
+   FACE DETECTION LOOP
+============================================================ */
+
+async function startFaceDetection() {
+
+
+    if (
+        monitorVideo.readyState >= 2
+    ) {
+
+        try {
+
+            await faceDetector.send({
+
+                image:
+                    monitorVideo
+
+            });
+
+        }
+
+        catch(error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    requestAnimationFrame(
+        startFaceDetection
+    );
+
+}
+
+
+/* ============================================================
+   FACE RESULTS
+============================================================ */
+
+function handleFaceResults(results) {
+
+
+    let count = 0;
+
+
+    if (
+        results.detections
+    ) {
+
+        count =
+            results.detections.length;
+
+    }
+
+
+    faceCountElement.innerText =
+        count;
+
+
+    /* Canvas */
+
+    monitorCanvas.width =
+        monitorVideo.videoWidth || 640;
+
+    monitorCanvas.height =
+        monitorVideo.videoHeight || 480;
+
+
+    monitorCtx.clearRect(
+
+        0,
+        0,
+        monitorCanvas.width,
+        monitorCanvas.height
+
+    );
+
+
+    /* Draw boxes */
+
+    results.detections.forEach(
+
+        function(detection) {
+
+
+            const box =
+                detection.boundingBox;
+
+
+            const x =
+                box.xCenter *
+                monitorCanvas.width;
+
+
+            const y =
+                box.yCenter *
+                monitorCanvas.height;
+
+
+            const width =
+                box.width *
+                monitorCanvas.width;
+
+
+            const height =
+                box.height *
+                monitorCanvas.height;
+
+
+            const left =
+                x - width / 2;
+
+
+            const top =
+                y - height / 2;
+
+
+            monitorCtx.strokeStyle =
+                count > 1
+                ? "#ef4444"
+                : "#10b981";
+
+
+            monitorCtx.lineWidth = 3;
+
+
+            monitorCtx.strokeRect(
+
+                left,
+                top,
+                width,
+                height
+
+            );
+
+        }
+
+    );
+
+
+    /* Multiple persons */
+
+    if (
+        count > 1
+    ) {
+
+        warningBox.style.display =
+            "block";
+
+
+        if (
+            previousFaceCount <= 1
+        ) {
+
+            faceAlerts++;
+
+            faceAlertsElement.innerText =
+                faceAlerts;
+
+        }
+
+    }
+
+    else {
+
+        warningBox.style.display =
+            "none";
+
+    }
+
+
+    /* Face disappeared */
+
+    if (
+        count === 0 &&
+        previousFaceCount > 0
+    ) {
+
+        faceAlerts++;
+
+        faceAlertsElement.innerText =
+            faceAlerts;
+
+    }
+
+
+    previousFaceCount =
+        count;
+
+}
+
+
+/* ============================================================
+   TAB SWITCH DETECTION
+============================================================ */
+
+document.addEventListener(
+
+    "visibilitychange",
+
+    function() {
+
+
+        if (
+            document.hidden &&
+            examStarted
+        ) {
+
+            tabSwitches++;
+
+            tabSwitchElement.innerText =
+                tabSwitches;
+
+            tabSwitchElement.style.color =
+                "#ef4444";
+
+
+            setTimeout(
+
+                function() {
+
+                    tabSwitchElement.style.color =
+                        "#f97316";
+
+                },
+
+                2000
+
+            );
+
+        }
+
+    }
+
+);
+
+
+/* ============================================================
+   START EXAM BUTTON
+============================================================ */
+
+startExamBtn.onclick =
+    function() {
+
+
+        /* Make sure camera works */
+
+        if (
+            !monitorStream
+        ) {
+
+            alert(
+                "Please allow camera access before starting the exam."
+            );
+
+            return;
+
+        }
+
+
+        /* Exactly one person */
+
+        if (
+            parseInt(
+                faceCountElement.innerText
+            ) !== 1
+        ) {
+
+            alert(
+                "Exactly one person must be visible before starting the exam."
+            );
+
+            return;
+
+        }
+
+
+        /* ================================================
+           CHANGE FROM INSTRUCTIONS TO QUESTIONS
+        ================================================= */
+
+        instructionsSection.style.display =
+            "none";
+
+
+        questionSection.style.display =
+            "block";
+
+
+        pageTitle.innerText =
+            "Data Science & Computer Vision Test";
+
+
+        startExamBtn.style.display =
+            "none";
+
+
+        submitExamBtn.style.display =
+            "block";
+
+
+        examStarted = true;
+
+
+        /* Start timer */
+
+        startTimer();
+
+    };
+
+
+/* ============================================================
+   TIMER
+============================================================ */
+
+let timeRemaining = 90 * 60;
+
+
+function startTimer() {
+
+
+    const timer =
+        setInterval(
+
+            function() {
+
+
+                if (
+                    timeRemaining <= 0
+                ) {
+
+                    clearInterval(timer);
+
+                    submitExam();
+
+                    return;
+
+                }
+
+
+                timeRemaining--;
+
+
+                const minutes =
+                    Math.floor(
+                        timeRemaining / 60
+                    );
+
+
+                const seconds =
+                    timeRemaining % 60;
+
+
+                document.getElementById(
+                    "examTimer"
+                ).innerText =
+
+                    String(minutes)
+                    .padStart(2, "0")
+
+                    + ":" +
+
+                    String(seconds)
+                    .padStart(2, "0");
+
+
+            },
+
+            1000
+
+        );
+
+}
+
+
+/* ============================================================
+   SUBMIT EXAM
+============================================================ */
+
+submitExamBtn.onclick =
+    function() {
+
+        submitExam();
+
+    };
+
+
+function submitExam() {
+
+
+    const questions = [
+
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5"
+
+    ];
+
+
+    let unanswered = 0;
+
+
+    questions.forEach(
+
+        function(question) {
+
+
+            const selected =
+                document.querySelector(
+                    'input[name="' +
+                    question +
+                    '"]:checked'
+                );
+
+
+            if (!selected) {
+
+                unanswered++;
+
+            }
+
+        }
+
+    );
+
+
+    if (
+        unanswered > 0
+    ) {
+
+        alert(
+            "Please answer all 5 questions before submitting."
+        );
+
+        return;
+
+    }
+
+
+    /* Correct answers */
+
+    const answers = {
+
+        q1: "Python",
+
+        q2: "imread",
+
+        q3: "clusters",
+
+        q4: "clusters",
+
+        q5: "haar"
+
+    };
+
+
+    let score = 0;
+
+
+    questions.forEach(
+
+        function(question) {
+
+
+            const selected =
+                document.querySelector(
+                    'input[name="' +
+                    question +
+                    '"]:checked'
+                );
+
+
+            if (
+                selected.value ===
+                answers[question]
+            ) {
+
+                score++;
+
+            }
+
+        }
+
+    );
+
+
+    alert(
+
+        "Exam Submitted Successfully!\n\n" +
+
+        "Score: " +
+
+        score +
+
+        " / 5\n\n" +
+
+        "Face Alerts: " +
+
+        faceAlerts +
+
+        "\n" +
+
+        "Tab Switches: " +
+
+        tabSwitches
+
+    );
+
+
+    /*
+       Later you can replace this with:
+
+       window.location.href =
+           "/exam-result";
+
+    */
+
+}
+
+
+/* ============================================================
+   PAGE LOAD
+============================================================ */
+
+window.addEventListener(
+
+    "load",
+
+    function() {
+
+        startMonitoringCamera();
+
+    }
+
+);
+
+</script>
+
+
+</body>
+
+</html>

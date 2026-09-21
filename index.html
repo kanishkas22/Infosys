@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ExamGuard — Candidate Access</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:        #1B2430;
+    --ink-deep:   #10161E;
+    --cream:      #F6F1E4;
+    --cream-line: #E3DAC2;
+    --ink-text:   #201C14;
+    --amber:      #E8A33D;
+    --teal:       #3F9C82;
+    --muted:      #8B94A3;
+  }
+
+  *{ box-sizing: border-box; }
+  html, body{ height: 100%; }
+  body{
+    margin:0;
+    font-family: 'Inter', sans-serif;
+    background: var(--ink-deep);
+    color: var(--ink-text);
+  }
+  a{ color: inherit; }
+
+  .screen{
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+  }
+
+  /* ---------- LEFT: INK PANEL ---------- */
+  .panel-ink{
+    background:
+      radial-gradient(circle at 15% 12%, rgba(63,156,130,0.14), transparent 45%),
+      var(--ink);
+    color: #F0EDE4;
+    padding: 56px 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .eyebrow{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .headline{
+    font-family: 'Fraunces', serif;
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-size: clamp(34px, 4.4vw, 54px);
+    line-height: 1.08;
+    margin: 22px 0 18px;
+    max-width: 9.5em;
+  }
+
+  .headline em{
+    font-style: italic;
+    color: var(--teal);
+  }
+
+  .subcopy{
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: #C9C4B6;
+    max-width: 34ch;
+  }
+
+  /* Signature element: live monitoring pulse */
+  .pulse-block{
+    margin-top: 48px;
+    border-top: 1px solid rgba(240,237,228,0.14);
+    padding-top: 22px;
+  }
+
+  .pulse-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #C9C4B6;
+    margin-bottom: 14px;
+  }
+
+  .dot{
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--amber);
+    box-shadow: 0 0 0 0 rgba(232,163,61,0.6);
+    animation: dotpulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes dotpulse{
+    0%   { box-shadow: 0 0 0 0 rgba(232,163,61,0.55); }
+    70%  { box-shadow: 0 0 0 8px rgba(232,163,61,0); }
+    100% { box-shadow: 0 0 0 0 rgba(232,163,61,0); }
+  }
+
+  .waveform{ width: 100%; height: 46px; display:block; }
+  .waveform path{
+    fill:none;
+    stroke: var(--teal);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-dasharray: 340;
+    stroke-dashoffset: 340;
+    animation: draw 3.6s ease-in-out infinite;
+  }
+  @keyframes draw{
+    0%   { stroke-dashoffset: 340; opacity: .35; }
+    45%  { stroke-dashoffset: 0;   opacity: 1;   }
+    55%  { stroke-dashoffset: 0;   opacity: 1;   }
+    100% { stroke-dashoffset: -340; opacity: .35; }
+  }
+
+  .footnote{
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 36ch;
+    margin-top: 20px;
+  }
+
+  /* ---------- RIGHT: CREAM ADMIT-CARD PANEL ---------- */
+  .panel-cream{
+    background: var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+  }
+
+  .card{
+    width: 100%;
+    max-width: 400px;
+    background: #FFFDF7;
+    border: 1px solid var(--cream-line);
+    border-radius: 14px;
+    padding: 40px 36px 34px;
+    box-shadow: 0 24px 60px -32px rgba(27,36,48,0.35);
+  }
+
+  .ticket-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom: 26px;
+  }
+
+  .ticket-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .ticket-mark{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    color: var(--teal);
+    border: 1px solid var(--teal);
+    border-radius: 999px;
+    padding: 3px 9px;
+  }
+
+  .tabs{
+    display:flex;
+    border-bottom: 1px solid var(--cream-line);
+    margin-bottom: 26px;
+  }
+
+  .tab{
+    flex:1;
+    background:none;
+    border:none;
+    font-family:'Inter', sans-serif;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--muted);
+    padding: 0 0 12px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color .15s ease, border-color .15s ease;
+  }
+  .tab.active{
+    color: var(--ink-text);
+    border-bottom-color: var(--amber);
+  }
+  .tab:focus-visible, .field input:focus-visible, .btn-primary:focus-visible, .link-btn:focus-visible{
+    outline: 2px solid var(--teal);
+    outline-offset: 2px;
+  }
+
+  form{ display:none; }
+  form.active{ display:block; }
+
+  .field{ margin-bottom: 18px; }
+  .field label{
+    display:block;
+    font-size: 12.5px;
+    font-weight: 600;
+    margin-bottom: 7px;
+    color: var(--ink-text);
+  }
+  .field input{
+    width: 100%;
+    padding: 11px 13px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14.5px;
+    border: 1px solid var(--cream-line);
+    border-radius: 8px;
+    background: #FFFEFB;
+    color: var(--ink-text);
+  }
+  .field input::placeholder{ color: #B7AF9B; }
+  .field-hint{
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .row-inline{ display:flex; align-items:center; justify-content:space-between; margin-bottom: 22px; }
+  .checkline{ display:flex; align-items:center; gap:8px; font-size: 13px; color: var(--muted); }
+  .checkline input{ accent-color: var(--teal); }
+
+  .btn-primary{
+    width: 100%;
+    padding: 13px;
+    background: var(--ink);
+    color: #F6F1E4;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14.5px;
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+  .btn-primary:hover{ background: #10161E; }
+
+  .switch-line{
+    text-align:center;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 20px;
+  }
+  .link-btn{
+    background:none; border:none; cursor:pointer;
+    font-weight: 600; color: var(--teal);
+    font-size: 13px; font-family:'Inter', sans-serif;
+    padding: 0;
+  }
+
+  .privacy-note{
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--cream-line);
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: var(--muted);
+  }
+
+  @media (max-width: 860px){
+    .screen{ grid-template-columns: 1fr; }
+    .panel-ink{ padding: 40px 28px; }
+    .panel-cream{ padding: 28px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .dot, .waveform path{ animation: none; }
+    .waveform path{ stroke-dashoffset: 0; opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="screen">
+
+  <!-- LEFT: INK PANEL -->
+  <section class="panel-ink">
+    <div>
+      <div class="eyebrow">Online Examination — Integrity Layer</div>
+      <h1 class="headline">Every session,<br><em>quietly</em> verified.</h1>
+      <p class="subcopy">ExamGuard tracks presence and activity through your exam so an invigilator can review with real evidence — not so a machine can rule on it for you.</p>
+    </div>
+
+    <div class="pulse-block">
+      <div class="pulse-row">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Session monitoring · Standby</span>
+      </div>
+      <svg class="waveform" viewBox="0 0 340 46" aria-hidden="true">
+        <path d="M0 23 L40 23 L52 8 L64 38 L76 23 L110 23 L122 14 L134 32 L146 23 L180 23 L192 6 L204 40 L216 23 L340 23"/>
+      </svg>
+      <p class="footnote">No face recognition. No liveness checks. Just presence, activity, and a clear record for your invigilator — the camera only runs during an active exam.</p>
+    </div>
+  </section>
+
+  <!-- RIGHT: CREAM ADMIT-CARD PANEL -->
+  <section class="panel-cream">
+    <div class="card">
+      <div class="ticket-row">
+        <span class="ticket-label">Candidate Access</span>
+        <span class="ticket-mark">Secure</span>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Access type">
+        <button class="tab active" id="tab-login" role="tab" aria-selected="true" aria-controls="form-login" onclick="showForm('login')">Log in</button>
+        <button class="tab" id="tab-register" role="tab" aria-selected="false" aria-controls="form-register" onclick="showForm('register')">Register</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <form id="form-login" class="active" action="/login" method="POST">
+        <div class="field">
+          <label for="login-id">Candidate ID or email</label>
+          <input type="text" id="login-id" name="candidate_id" placeholder="e.g. EG-2026-00417" required>
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" name="password" placeholder="••••••••" required>
+        </div>
+        <div class="row-inline">
+          <label class="checkline">
+            <input type="checkbox" name="keep_signed_in">
+            Keep me signed in
+          </label>
+        </div>
+        <button type="submit" class="btn-primary">Enter exam hall</button>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form id="form-register" action="/register" method="POST">
+        <div class="field">
+          <label for="reg-name">Full name</label>
+          <input type="text" id="reg-name" name="full_name" placeholder="As it appears on your ID" required>
+        </div>
+        <div class="field">
+          <label for="reg-email">Email</label>
+          <input type="email" id="reg-email" name="email" placeholder="you@example.com" required>
+        </div>
+        <div class="field">
+          <label for="reg-password">Password</label>
+          <input type="password" id="reg-password" name="password" placeholder="At least 8 characters" required minlength="8">
+          <p class="field-hint">Your candidate ID is generated after this step — you'll capture your registration photo next.</p>
+        </div>
+        <button type="submit" class="btn-primary">Create candidate profile</button>
+      </form>
+
+      <p class="switch-line" id="switch-login">
+        New candidate? <button class="link-btn" onclick="showForm('register')">Register for an exam</button>
+      </p>
+      <p class="switch-line" id="switch-register" style="display:none;">
+        Already registered? <button class="link-btn" onclick="showForm('login')">Log in instead</button>
+      </p>
+
+      <p class="privacy-note">By continuing, you agree that this session's face-presence and browser-activity events will be logged for invigilator review. No identifying biometric data is stored beyond your registration photo.</p>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  function showForm(which){
+    const isLogin = which === 'login';
+
+    document.getElementById('form-login').classList.toggle('active', isLogin);
+    document.getElementById('form-register').classList.toggle('active', !isLogin);
+
+    document.getElementById('tab-login').classList.toggle('active', isLogin);
+    document.getElementById('tab-register').classList.toggle('active', !isLogin);
+    document.getElementById('tab-login').setAttribute('aria-selected', isLogin);
+    document.getElementById('tab-register').setAttribute('aria-selected', !isLogin);
+
+    document.getElementById('switch-login').style.display = isLogin ? 'block' : 'none';
+    document.getElementById('switch-register').style.display = isLogin ? 'none' : 'block';
+  }
+</script>
+
+</body>
+</html>
